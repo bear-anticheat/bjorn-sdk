@@ -1,5 +1,7 @@
 package com.bear.bjornsdk;
 
+import com.bear.bjornsdk.object.Violation;
+import com.bear.bjornsdk.response.impl.ViolationSubmitResponse;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -60,6 +62,31 @@ public class BjornSDK {
             _sessionToken = token;
             _ready = true;
         }
+    }
+
+    @SneakyThrows
+    public ViolationSubmitResponse submitViolation(final Violation violation) {
+        final String check = violation.getCheckParent() + ":" + violation.getCheckType();
+        final String server = violation.getServerLicense() + ":" + violation.getServerName();
+
+        final JsonObject json = new JsonObject();
+
+        json.addProperty("check", check);
+        json.addProperty("server", server);
+
+        json.addProperty("level", violation.getVl());
+        json.addProperty("uuid", violation.getUuid().toString());
+
+        final String _response = sendRequestWithBody("/logs/_/submit", GSON.toJson(json));
+
+        if (_response == null) {
+            System.out.println("[bjorn-sdk] null response on log submission");
+            return null;
+        }
+
+        final JsonObject response = JsonParser.parseString(_response).getAsJsonObject();
+
+        return new ViolationSubmitResponse(response.get("message").getAsString(), response.get("success").getAsBoolean());
     }
 
     @SneakyThrows
