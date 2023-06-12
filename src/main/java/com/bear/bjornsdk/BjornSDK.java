@@ -1,6 +1,7 @@
 package com.bear.bjornsdk;
 
 import com.bear.bjornsdk.object.Violation;
+import com.bear.bjornsdk.response.impl.ServerSearchResponse;
 import com.bear.bjornsdk.response.impl.ViolationSubmitResponse;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -13,12 +14,16 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-@RequiredArgsConstructor
+@Data
 public class BjornSDK {
 
     private final String hostname;
     private final String apiKey;
+
+    private ExecutorService executorService;
 
     private static final Gson GSON = new GsonBuilder().create();
 
@@ -40,6 +45,10 @@ public class BjornSDK {
      */
     @SneakyThrows
     public void init() {
+        System.out.println("[bjorn-sdk] initializing executor...");
+
+        executorService = Executors.newSingleThreadExecutor();
+
         System.out.println("[bjorn-sdk] attempting to obtain session token...");
 
         final String jsonResponse = sendRequestWithBody("/auth/a/login", "{\n   \"apiKey\": \"" + apiKey + "\"\n}");
@@ -53,7 +62,7 @@ public class BjornSDK {
 
         final JsonObject json = JsonParser.parseString(jsonResponse).getAsJsonObject();
 
-        if (json.get("success").getAsBoolean() && json.has("data")) {
+        if (json.get("status").getAsString().equals("success") && json.has("data")) {
             final JsonObject data = json.get("data").getAsJsonObject();
             final String token = data.get("token").getAsString();
 
@@ -62,6 +71,25 @@ public class BjornSDK {
             _sessionToken = token;
             _ready = true;
         }
+    }
+
+    @SneakyThrows
+    public ServerSearchResponse checkLicense(final String licenseKey) {
+        final JsonObject json = new JsonObject();
+
+        json.addProperty("license", licenseKey);
+
+        final String _response = sendRequestWithBody("/servers/_/search", GSON.toJson(json));
+
+        if (_response == null) {
+            System.out.println("[bjorn-sdk] null response on license check");
+            return null;
+        }
+
+        final JsonObject response = JsonParser.parseString(_response).getAsJsonObject();
+
+        return new ServerSearchResponse(response.get("status").getAsString().equals("success"), response.get("data")
+                .getAsJsonObject().get("result").getAsBoolean());
     }
 
     @SneakyThrows
@@ -75,6 +103,7 @@ public class BjornSDK {
         json.addProperty("server", server);
 
         json.addProperty("level", violation.getVl());
+        json.addProperty("debug", violation.getDebug());
         json.addProperty("uuid", violation.getUuid().toString());
 
         final String _response = sendRequestWithBody("/logs/_/submit", GSON.toJson(json));
@@ -86,7 +115,8 @@ public class BjornSDK {
 
         final JsonObject response = JsonParser.parseString(_response).getAsJsonObject();
 
-        return new ViolationSubmitResponse(response.get("message").getAsString(), response.get("success").getAsBoolean());
+        return new ViolationSubmitResponse(response.get("message").getAsString(),
+                response.get("status").getAsString().equals("success"));
     }
 
     @SneakyThrows

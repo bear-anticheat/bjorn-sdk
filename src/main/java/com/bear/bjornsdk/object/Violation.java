@@ -7,6 +7,7 @@ import java.util.UUID;
 @Data
 public class Violation {
 
+    private final String debug;
     private final String checkParent, checkType;
     private final String serverLicense, serverName;
 
