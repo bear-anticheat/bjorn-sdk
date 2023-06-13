@@ -142,8 +142,10 @@ public class BjornSDK {
         final String alertFormat = data.get("alertFormat").getAsString();
         final String[] banFormat = JsonArrayDeserializer.transformString(data.get("banFormat").getAsJsonArray());
 
+        final boolean proxyAlerts = data.get("proxyAlerts").getAsBoolean();
+
         return new ConfigResponse(response.get("status").getAsString().equals("success"),
-                new Configuration(alertFormat, banFormat));
+                new Configuration(alertFormat, banFormat, proxyAlerts));
     }
 
     @SneakyThrows

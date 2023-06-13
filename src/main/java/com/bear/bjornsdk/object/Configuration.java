@@ -7,4 +7,6 @@ public class Configuration {
 
     private final String alertFormat;
     private final String[] banAlertFormat;
+
+    private final boolean proxyAlerts;
 }
