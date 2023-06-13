@@ -1,8 +1,11 @@
 package com.bear.bjornsdk;
 
+import com.bear.bjornsdk.object.Configuration;
 import com.bear.bjornsdk.object.Violation;
+import com.bear.bjornsdk.response.impl.ConfigResponse;
 import com.bear.bjornsdk.response.impl.ServerSearchResponse;
 import com.bear.bjornsdk.response.impl.ViolationSubmitResponse;
+import com.bear.bjornsdk.util.JsonArrayDeserializer;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -120,13 +123,37 @@ public class BjornSDK {
     }
 
     @SneakyThrows
+    public ConfigResponse fetchConfig(final String licenseKey) {
+        final String _response = sendRequest("/config/license/" + licenseKey);
+
+        if (_response == null) {
+            System.out.println("[bjorn-sdk] null response on config fetch");
+            return null;
+        }
+
+        final JsonObject response = JsonParser.parseString(_response).getAsJsonObject();
+
+        if (!response.has("data")) {
+            return new ConfigResponse(false, null);
+        }
+
+        final JsonObject data = response.get("data").getAsJsonObject();
+
+        final String alertFormat = data.get("alertFormat").getAsString();
+        final String[] banFormat = JsonArrayDeserializer.transformString(data.get("banFormat").getAsJsonArray());
+
+        return new ConfigResponse(response.get("status").getAsString().equals("success"),
+                new Configuration(alertFormat, banFormat));
+    }
+
+    @SneakyThrows
     private String sendRequest(final String path) {
         if (_failed) return null;
 
         final URL url = new URL(hostname + path);
         final HttpURLConnection http = (HttpURLConnection) url.openConnection();
 
-        http.setRequestMethod("POST");
+        http.setRequestMethod("GET");
         http.setRequestProperty("User-Agent", "Bjorn Java SDK");
 
         if (_ready) {
