@@ -5,8 +5,8 @@ import lombok.Data;
 @Data
 public class Configuration {
 
-    private final String alertFormat;
+    private final String alertFormat, banCommand;
     private final String[] banAlertFormat;
 
-    private final boolean proxyAlerts;
+    private final boolean proxyAlerts, proxyBans;
 }

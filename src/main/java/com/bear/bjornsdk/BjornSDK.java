@@ -156,12 +156,15 @@ public class BjornSDK {
         final JsonObject data = response.get("data").getAsJsonObject();
 
         final String alertFormat = data.get("alertFormat").getAsString();
+        final String banCommand = data.get("banCommand").getAsString();
+
         final String[] banFormat = JsonArrayDeserializer.transformString(data.get("banFormat").getAsJsonArray());
 
         final boolean proxyAlerts = data.get("proxyAlerts").getAsBoolean();
+        final boolean proxyBans = data.get("proxyBans").getAsBoolean();
 
         return new ConfigResponse(response.get("status").getAsString().equals("success"),
-                new Configuration(alertFormat, banFormat, proxyAlerts));
+                new Configuration(alertFormat, banCommand, banFormat, proxyAlerts, proxyBans));
     }
 
     @SneakyThrows
