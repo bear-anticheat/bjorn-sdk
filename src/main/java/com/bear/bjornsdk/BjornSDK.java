@@ -26,8 +26,6 @@ public class BjornSDK {
     private final String hostname;
     private final String apiKey;
 
-    private ExecutorService executorService;
-
     private static final Gson GSON = new GsonBuilder().create();
 
     @Getter(AccessLevel.NONE)
@@ -48,10 +46,6 @@ public class BjornSDK {
      */
     @SneakyThrows
     public void init() {
-        System.out.println("[bjorn-sdk] initializing executor...");
-
-        executorService = Executors.newSingleThreadExecutor();
-
         System.out.println("[bjorn-sdk] attempting to obtain session token...");
 
         final String jsonResponse = sendRequestWithBody("POST", "/auth/a/login", "{\n   \"apiKey\": \"" + apiKey + "\"\n}");
