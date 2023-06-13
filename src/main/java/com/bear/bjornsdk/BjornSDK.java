@@ -17,8 +17,6 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 @Data
 public class BjornSDK {
@@ -68,6 +66,24 @@ public class BjornSDK {
             _sessionToken = token;
             _ready = true;
         }
+    }
+
+    @SneakyThrows
+    public boolean destroy() {
+        if (!_ready || _failed) return false;
+
+        System.out.println("[bjorn-sdk] destroying session...");
+
+        final String _response = sendRequest("DELETE", "/auth/revoke");
+
+        if (_response == null) {
+            System.out.println("[bjorn-sdk] null response on session revokal");
+            return false;
+        }
+
+        final JsonObject response = JsonParser.parseString(_response).getAsJsonObject();
+
+        return response.get("status").getAsString().equals("success");
     }
 
     @SneakyThrows
@@ -124,7 +140,7 @@ public class BjornSDK {
 
     @SneakyThrows
     public ConfigResponse fetchConfig(final String licenseKey) {
-        final String _response = sendRequest("/config/license/" + licenseKey);
+        final String _response = sendRequest("GET", "/config/license/" + licenseKey);
 
         if (_response == null) {
             System.out.println("[bjorn-sdk] null response on config fetch");
@@ -149,13 +165,13 @@ public class BjornSDK {
     }
 
     @SneakyThrows
-    private String sendRequest(final String path) {
+    private String sendRequest(final String method, final String path) {
         if (_failed) return null;
 
         final URL url = new URL(hostname + path);
         final HttpURLConnection http = (HttpURLConnection) url.openConnection();
 
-        http.setRequestMethod("GET");
+        http.setRequestMethod(method);
         http.setRequestProperty("User-Agent", "Bjorn Java SDK");
 
         if (_ready) {
