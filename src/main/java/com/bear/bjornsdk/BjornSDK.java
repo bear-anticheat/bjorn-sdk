@@ -51,7 +51,7 @@ public class BjornSDK {
 
         System.out.println("[bjorn-sdk] attempting to obtain session token...");
 
-        final String jsonResponse = sendRequestWithBody("/auth/a/login", "{\n   \"apiKey\": \"" + apiKey + "\"\n}");
+        final String jsonResponse = sendRequestWithBody("POST", "/auth/a/login", "{\n   \"apiKey\": \"" + apiKey + "\"\n}");
 
         if (jsonResponse == null || !jsonResponse.contains("token\":")) {
             System.out.println("[bjorn-sdk] could not obtain session token!");
@@ -79,7 +79,7 @@ public class BjornSDK {
 
         json.addProperty("license", licenseKey);
 
-        final String _response = sendRequestWithBody("/servers/_/search", GSON.toJson(json));
+        final String _response = sendRequestWithBody("POST", "/servers/_/search", GSON.toJson(json));
 
         if (_response == null) {
             System.out.println("[bjorn-sdk] null response on license check");
@@ -106,7 +106,7 @@ public class BjornSDK {
         json.addProperty("debug", violation.getDebug());
         json.addProperty("uuid", violation.getUuid().toString());
 
-        final String _response = sendRequestWithBody("/logs/_/submit", GSON.toJson(json));
+        final String _response = sendRequestWithBody("PUT", "/logs/_/submit", GSON.toJson(json));
 
         if (_response == null) {
             System.out.println("[bjorn-sdk] null response on log submission");
@@ -143,7 +143,7 @@ public class BjornSDK {
     }
 
     @SneakyThrows
-    private String sendRequestWithBody(final String path, final String body) {
+    private String sendRequestWithBody(final String method, final String path, final String body) {
         if (_failed) return null;
 
         final URL url = new URL(hostname + path);
@@ -151,7 +151,7 @@ public class BjornSDK {
 
         http.setDoOutput(true);
 
-        http.setRequestMethod("POST");
+        http.setRequestMethod(method);
         http.setRequestProperty("User-Agent", "Bjorn Java SDK");
         http.setRequestProperty("Content-Type", "application/json");
 
