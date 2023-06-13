@@ -85,11 +85,17 @@ public class BjornSDK {
         final String _response = sendRequestWithBody("POST", "/servers/_/search", GSON.toJson(json));
 
         if (_response == null) {
-            System.out.println("[bjorn-sdk] null response on license check");
+            System.out.println("[bjorn-sdk] null response on server search");
             return null;
         }
 
         final JsonObject response = JsonParser.parseString(_response).getAsJsonObject();
+
+        if (!response.has("data")) {
+            System.out.println("[bjorn-sdk] no data on server search");
+
+            return new ServerSearchResponse(false, false);
+        }
 
         return new ServerSearchResponse(response.get("status").getAsString().equals("success"), response.get("data")
                 .getAsJsonObject().get("result").getAsBoolean());
