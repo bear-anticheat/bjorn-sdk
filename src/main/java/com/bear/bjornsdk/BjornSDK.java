@@ -1,5 +1,6 @@
 package com.bear.bjornsdk;
 
+import com.bear.bjornsdk.fields.ReconnectionAction;
 import com.bear.bjornsdk.object.Configuration;
 import com.bear.bjornsdk.object.Violation;
 import com.bear.bjornsdk.response.impl.ConfigResponse;
@@ -160,11 +161,13 @@ public class BjornSDK {
 
         final String[] banFormat = JsonArrayDeserializer.transformString(data.get("banFormat").getAsJsonArray());
 
+        final ReconnectionAction reconnectionAction = ReconnectionAction.valueOf(data.get("reconnectionAction").getAsString());
+
         final boolean proxyAlerts = data.get("proxyAlerts").getAsBoolean();
         final boolean proxyBans = data.get("proxyBans").getAsBoolean();
 
         return new ConfigResponse(response.get("status").getAsString().equals("success"),
-                new Configuration(alertFormat, banCommand, banFormat, proxyAlerts, proxyBans));
+                new Configuration(alertFormat, banCommand, banFormat, reconnectionAction, proxyAlerts, proxyBans));
     }
 
     @SneakyThrows
