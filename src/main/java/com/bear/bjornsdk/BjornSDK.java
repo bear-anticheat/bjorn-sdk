@@ -1,8 +1,10 @@
 package com.bear.bjornsdk;
 
 import com.bear.bjornsdk.fields.ReconnectionAction;
+import com.bear.bjornsdk.object.BjornServer;
 import com.bear.bjornsdk.object.Configuration;
 import com.bear.bjornsdk.object.Violation;
+import com.bear.bjornsdk.response.impl.BjornServerResponse;
 import com.bear.bjornsdk.response.impl.ConfigResponse;
 import com.bear.bjornsdk.response.impl.ServerSearchResponse;
 import com.bear.bjornsdk.response.impl.ViolationSubmitResponse;
@@ -18,6 +20,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
 @Data
 public class BjornSDK {
@@ -69,7 +72,6 @@ public class BjornSDK {
         }
     }
 
-    @SneakyThrows
     public boolean destroy() {
         if (!_ready || _failed) return false;
 
@@ -87,7 +89,6 @@ public class BjornSDK {
         return response.get("status").getAsString().equals("success");
     }
 
-    @SneakyThrows
     public ServerSearchResponse checkLicense(final String licenseKey) {
         final JsonObject json = new JsonObject();
 
@@ -112,7 +113,6 @@ public class BjornSDK {
                 .getAsJsonObject().get("result").getAsBoolean());
     }
 
-    @SneakyThrows
     public ViolationSubmitResponse submitViolation(final Violation violation) {
         final String check = violation.getCheckParent() + ":" + violation.getCheckType();
         final String server = violation.getServerLicense() + ":" + violation.getServerName();
@@ -139,7 +139,6 @@ public class BjornSDK {
                 response.get("status").getAsString().equals("success"));
     }
 
-    @SneakyThrows
     public ConfigResponse fetchConfig(final String licenseKey) {
         final String _response = sendRequest("GET", "/config/license/" + licenseKey);
 
@@ -168,6 +167,31 @@ public class BjornSDK {
 
         return new ConfigResponse(response.get("status").getAsString().equals("success"),
                 new Configuration(alertFormat, banCommand, banFormat, reconnectionAction, proxyAlerts, proxyBans));
+    }
+
+    public BjornServerResponse fetchServer(final String licenseKey) {
+        final String _response = sendRequest("GET", "/servers/license/" + licenseKey);
+
+        if (_response == null) {
+            System.out.println("[bjorn-sdk] null response on server fetch");
+            return null;
+        }
+
+        final JsonObject response = JsonParser.parseString(_response).getAsJsonObject();
+
+        if (!response.has("data")) {
+            return new BjornServerResponse(false, null);
+        }
+
+        final JsonObject data = response.get("data").getAsJsonObject();
+
+        final String name = data.get("name").getAsString();
+
+        final UUID id = UUID.fromString(data.get("id").getAsString());
+        final UUID owner = UUID.fromString(data.get("owner").getAsString());
+
+        return new BjornServerResponse(response.get("status").getAsString().equals("success"),
+                new BjornServer(name, licenseKey, id, owner));
     }
 
     @SneakyThrows
